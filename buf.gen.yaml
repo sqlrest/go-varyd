@@ -1,0 +1,12 @@
+version: v2
+plugins:
+  - local: protoc-gen-go
+    out: .
+    opt:
+      - module=github.com/sqlrest/go-varyd
+  - local: protoc-gen-go-grpc
+    out: .
+    opt:
+      - module=github.com/sqlrest/go-varyd
+inputs:
+  - directory: api/proto

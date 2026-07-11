@@ -1,0 +1,7 @@
+# Per-repo coverage scope: exclude the committed generated protobuf tree from
+# the unit-coverage gate (generated code is never subject to the 100% bar).
+COVER_PKGS := $(shell go list ./... | grep -v '/src/proto')
+
+.PHONY: proto
+proto: ## Regenerate src/proto from api/proto via ad-hoc buf
+	scripts/proto-gen.sh

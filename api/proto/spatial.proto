@@ -1,0 +1,435 @@
+syntax = "proto3";
+
+package varyd.api.v1;
+
+import "google/protobuf/timestamp.proto";
+import "types.proto";
+
+option go_package = "github.com/sqlrest/go-varyd/src/proto/spatial";
+
+service SpatialService {
+  // Geometry operations
+  rpc CreateGeometry(CreateGeometryRequest) returns (CreateGeometryResponse);
+  rpc GetGeometry(GetGeometryRequest) returns (GetGeometryResponse);
+  rpc UpdateGeometry(UpdateGeometryRequest) returns (UpdateGeometryResponse);
+  rpc DeleteGeometry(DeleteGeometryRequest) returns (DeleteGeometryResponse);
+  rpc ListGeometries(ListGeometriesRequest) returns (ListGeometriesResponse);
+
+  // Spatial queries
+  rpc Query(QueryRequest) returns (QueryResponse);
+  rpc Within(WithinRequest) returns (WithinResponse);
+  rpc Intersects(IntersectsRequest) returns (IntersectsResponse);
+  rpc Contains(ContainsRequest) returns (ContainsResponse);
+  rpc Touches(TouchesRequest) returns (TouchesResponse);
+  rpc Crosses(CrossesRequest) returns (CrossesResponse);
+  rpc Overlaps(OverlapsRequest) returns (OverlapsResponse);
+  rpc Distance(DistanceRequest) returns (DistanceResponse);
+  rpc Nearest(NearestRequest) returns (NearestResponse);
+
+  // Spatial operations
+  rpc Buffer(BufferRequest) returns (BufferResponse);
+  rpc Union(UnionRequest) returns (UnionResponse);
+  rpc Intersection(IntersectionRequest) returns (IntersectionResponse);
+  rpc Difference(DifferenceRequest) returns (DifferenceResponse);
+  rpc ConvexHull(ConvexHullRequest) returns (ConvexHullResponse);
+  rpc Simplify(SimplifyRequest) returns (SimplifyResponse);
+
+  // Spatial indexing
+  rpc CreateSpatialIndex(CreateSpatialIndexRequest) returns (CreateSpatialIndexResponse);
+  rpc DeleteSpatialIndex(DeleteSpatialIndexRequest) returns (DeleteSpatialIndexResponse);
+  rpc ListSpatialIndexes(ListSpatialIndexesRequest) returns (ListSpatialIndexesResponse);
+  rpc IndexQuery(IndexQueryRequest) returns (IndexQueryResponse);
+
+  // Coordinate transformation
+  rpc Transform(TransformRequest) returns (TransformResponse);
+  rpc GetSRSInfo(GetSRSInfoRequest) returns (GetSRSInfoResponse);
+}
+
+// Geometry operations
+message CreateGeometryRequest {
+  GeometryRef geometry = 1;
+  map<string, string> options = 2;
+}
+
+message CreateGeometryResponse {
+  bool success = 1;
+  string geometry_id = 2;
+  GeometryRef geometry = 3;
+  Error error = 4;
+}
+
+message GetGeometryRequest {
+  string geometry_id = 1;
+  map<string, string> options = 2;
+}
+
+message GetGeometryResponse {
+  bool success = 1;
+  GeometryRef geometry = 2;
+  Error error = 3;
+}
+
+message UpdateGeometryRequest {
+  string geometry_id = 1;
+  GeometryRef geometry = 2;
+  map<string, string> options = 3;
+}
+
+message UpdateGeometryResponse {
+  bool success = 1;
+  GeometryRef geometry = 2;
+  Error error = 3;
+}
+
+message DeleteGeometryRequest {
+  string geometry_id = 1;
+  map<string, string> options = 2;
+}
+
+message DeleteGeometryResponse {
+  bool success = 1;
+  Error error = 2;
+}
+
+message ListGeometriesRequest {
+  repeated GeometryRef.Type geometry_types = 1;
+  string srid = 2;
+  int32 limit = 3;
+  int32 offset = 4;
+  map<string, string> options = 5;
+}
+
+message ListGeometriesResponse {
+  bool success = 1;
+  repeated GeometryRef geometries = 2;
+  int64 total_count = 3;
+  Error error = 4;
+}
+
+// Spatial queries
+message QueryRequest {
+  TableRef table = 1;
+  Condition condition = 2;
+  repeated string layers = 3;
+  map<string, string> options = 4;
+}
+
+message QueryResponse {
+  bool success = 1;
+  repeated GeometryRef results = 2;
+  int32 total_count = 3;
+  Error error = 4;
+}
+
+message WithinRequest {
+  TableRef table = 1;
+  ColumnRef geometry_column = 2;
+  GeometryRef boundary = 3;
+  map<string, string> options = 4;
+}
+
+message WithinResponse {
+  bool success = 1;
+  repeated GeometryRef results = 2;
+  bool within = 3;
+  Error error = 4;
+}
+
+message IntersectsRequest {
+  GeometryRef geometry1 = 1;
+  GeometryRef geometry2 = 2;
+  map<string, string> options = 3;
+}
+
+message IntersectsResponse {
+  bool success = 1;
+  bool intersects = 2;
+  Error error = 3;
+}
+
+message ContainsRequest {
+  GeometryRef container = 1;
+  GeometryRef contained = 2;
+  map<string, string> options = 3;
+}
+
+message ContainsResponse {
+  bool success = 1;
+  bool contains = 2;
+  Error error = 3;
+}
+
+message TouchesRequest {
+  GeometryRef geometry1 = 1;
+  GeometryRef geometry2 = 2;
+  map<string, string> options = 3;
+}
+
+message TouchesResponse {
+  bool success = 1;
+  bool touches = 2;
+  Error error = 3;
+}
+
+message CrossesRequest {
+  GeometryRef geometry1 = 1;
+  GeometryRef geometry2 = 2;
+  map<string, string> options = 3;
+}
+
+message CrossesResponse {
+  bool success = 1;
+  bool crosses = 2;
+  Error error = 3;
+}
+
+message OverlapsRequest {
+  GeometryRef geometry1 = 1;
+  GeometryRef geometry2 = 2;
+  map<string, string> options = 3;
+}
+
+message OverlapsResponse {
+  bool success = 1;
+  bool overlaps = 2;
+  Error error = 3;
+}
+
+message DistanceRequest {
+  GeometryRef geometry1 = 1;
+  GeometryRef geometry2 = 2;
+  DistanceCondition.Unit unit = 3;
+  DistanceAlgorithm algorithm = 4;
+  map<string, string> options = 5;
+}
+
+enum DistanceAlgorithm {
+  EUCLIDEAN = 0;
+  HAVERSINE = 1;
+  VINCENTY = 2;
+  GREAT_CIRCLE = 3;
+}
+
+message DistanceResponse {
+  bool success = 1;
+  double distance = 2;
+  DistanceCondition.Unit unit = 3;
+  Error error = 4;
+}
+
+message NearestRequest {
+  GeometryRef point = 1;
+  repeated string layers = 2;
+  int32 limit = 3;
+  double max_distance = 4;
+  DistanceCondition.Unit unit = 5;
+  map<string, string> options = 6;
+}
+
+message NearestResponse {
+  bool success = 1;
+  repeated NearestResult results = 2;
+  Error error = 3;
+}
+
+// Spatial operations
+message BufferRequest {
+  GeometryRef geometry = 1;
+  double distance = 2;
+  DistanceCondition.Unit unit = 3;
+  int32 segments = 4;
+  CapStyle cap_style = 5;
+  JoinStyle join_style = 6;
+  map<string, string> options = 7;
+}
+
+enum CapStyle {
+  ROUND = 0;
+  FLAT = 1;
+  SQUARE = 2;
+}
+
+enum JoinStyle {
+  ROUND_JOIN = 0;
+  MITRE = 1;
+  BEVEL = 2;
+}
+
+message BufferResponse {
+  bool success = 1;
+  GeometryRef buffered_geometry = 2;
+  Error error = 3;
+}
+
+message UnionRequest {
+  repeated GeometryRef geometries = 1;
+  map<string, string> options = 2;
+}
+
+message UnionResponse {
+  bool success = 1;
+  GeometryRef union_geometry = 2;
+  Error error = 3;
+}
+
+message IntersectionRequest {
+  GeometryRef geometry1 = 1;
+  GeometryRef geometry2 = 2;
+  map<string, string> options = 3;
+}
+
+message IntersectionResponse {
+  bool success = 1;
+  GeometryRef intersection_geometry = 2;
+  Error error = 3;
+}
+
+message DifferenceRequest {
+  GeometryRef geometry1 = 1;
+  GeometryRef geometry2 = 2;
+  map<string, string> options = 3;
+}
+
+message DifferenceResponse {
+  bool success = 1;
+  GeometryRef difference_geometry = 2;
+  Error error = 3;
+}
+
+message ConvexHullRequest {
+  GeometryRef geometry = 1;
+  map<string, string> options = 2;
+}
+
+message ConvexHullResponse {
+  bool success = 1;
+  GeometryRef convex_hull = 2;
+  Error error = 3;
+}
+
+message SimplifyRequest {
+  GeometryRef geometry = 1;
+  double tolerance = 2;
+  bool preserve_topology = 3;
+  map<string, string> options = 4;
+}
+
+message SimplifyResponse {
+  bool success = 1;
+  GeometryRef simplified_geometry = 2;
+  Error error = 3;
+}
+
+// Spatial indexing
+message CreateSpatialIndexRequest {
+  string collection = 1;
+  SpatialIndexType index_type = 2;
+  string srid = 3;
+  repeated string layers = 4;
+  map<string, string> options = 5;
+}
+
+enum SpatialIndexType {
+  R_TREE = 0;
+  QUADTREE = 1;
+  GEOHASH = 2;
+  HILBERT = 3;
+  GRID = 4;
+}
+
+message CreateSpatialIndexResponse {
+  bool success = 1;
+  string index_id = 2;
+  Error error = 3;
+}
+
+message DeleteSpatialIndexRequest {
+  string index_id = 1;
+  map<string, string> options = 2;
+}
+
+message DeleteSpatialIndexResponse {
+  bool success = 1;
+  Error error = 2;
+}
+
+message ListSpatialIndexesRequest {
+  string collection = 1;
+  map<string, string> options = 2;
+}
+
+message ListSpatialIndexesResponse {
+  bool success = 1;
+  repeated SpatialIndex indexes = 2;
+  Error error = 3;
+}
+
+message IndexQueryRequest {
+  string index_id = 1;
+  GeometryRef query_geometry = 2;
+  SpatialCondition.Operation query_type = 3;
+  map<string, string> options = 4;
+}
+
+message IndexQueryResponse {
+  bool success = 1;
+  repeated GeometryRef results = 2;
+  int32 total_count = 3;
+  Error error = 4;
+}
+
+// Coordinate transformation
+message TransformRequest {
+  GeometryRef geometry = 1;
+  string target_srid = 2;
+  map<string, string> options = 3;
+}
+
+message TransformResponse {
+  bool success = 1;
+  GeometryRef transformed_geometry = 2;
+  Error error = 3;
+}
+
+message GetSRSInfoRequest {
+  string srid = 1;
+  map<string, string> options = 2;
+}
+
+message GetSRSInfoResponse {
+  bool success = 1;
+  SRSInfo srs_info = 2;
+  Error error = 3;
+}
+
+// Data structures
+message NearestResult {
+  string geometry_id = 1;
+  GeometryRef geometry = 2;
+  double distance = 3;
+  DistanceCondition.Unit unit = 4;
+  map<string, string> properties = 5;
+}
+
+message SpatialIndex {
+  string index_id = 1;
+  string collection = 2;
+  SpatialIndexType type = 3;
+  string srid = 4;
+  repeated string layers = 5;
+  int32 geometry_count = 6;
+  map<string, string> options = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+message SRSInfo {
+  string srid = 1;
+  string authority = 2;
+  string name = 3;
+  string proj4_text = 4;
+  string wkt = 5;
+  string units = 6;
+  bool is_geographic = 7;
+  map<string, string> parameters = 8;
+}

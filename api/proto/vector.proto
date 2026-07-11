@@ -1,0 +1,389 @@
+syntax = "proto3";
+
+package varyd.api.v1;
+
+import "google/protobuf/timestamp.proto";
+import "types.proto";
+
+option go_package = "github.com/sqlrest/go-varyd/src/proto/vector";
+
+service VectorService {
+  // Vector operations
+  rpc CreateVector(CreateVectorRequest) returns (CreateVectorResponse);
+  rpc GetVector(GetVectorRequest) returns (GetVectorResponse);
+  rpc UpdateVector(UpdateVectorRequest) returns (UpdateVectorResponse);
+  rpc DeleteVector(DeleteVectorRequest) returns (DeleteVectorResponse);
+  rpc ListVectors(ListVectorsRequest) returns (ListVectorsResponse);
+
+  // Similarity operations
+  rpc SimilaritySearch(SimilaritySearchRequest) returns (SimilaritySearchResponse);
+  rpc NearestNeighbors(NearestNeighborsRequest) returns (NearestNeighborsResponse);
+  rpc VectorDistance(VectorDistanceRequest) returns (VectorDistanceResponse);
+
+  // Vector operations
+  rpc VectorAdd(VectorAddRequest) returns (VectorAddResponse);
+  rpc VectorSubtract(VectorSubtractRequest) returns (VectorSubtractResponse);
+  rpc VectorMultiply(VectorMultiplyRequest) returns (VectorMultiplyResponse);
+  rpc VectorNormalize(VectorNormalizeRequest) returns (VectorNormalizeResponse);
+  rpc DotProduct(DotProductRequest) returns (DotProductResponse);
+
+  // Embedding operations
+  rpc GenerateEmbedding(GenerateEmbeddingRequest) returns (GenerateEmbeddingResponse);
+  rpc BatchEmbedding(BatchEmbeddingRequest) returns (BatchEmbeddingResponse);
+  rpc EmbeddingSimilarity(EmbeddingSimilarityRequest) returns (EmbeddingSimilarityResponse);
+
+  // Clustering operations
+  rpc VectorClustering(VectorClusteringRequest) returns (VectorClusteringResponse);
+  rpc ClusterAnalysis(ClusterAnalysisRequest) returns (ClusterAnalysisResponse);
+
+  // Index operations
+  rpc CreateIndex(CreateIndexRequest) returns (CreateIndexResponse);
+  rpc DeleteIndex(DeleteIndexRequest) returns (DeleteIndexResponse);
+  rpc ListIndexes(ListIndexesRequest) returns (ListIndexesResponse);
+}
+
+// Vector operations
+message CreateVectorRequest {
+  string id = 1;
+  VectorRef vector = 2;
+  map<string, string> options = 3;
+}
+
+message CreateVectorResponse {
+  bool success = 1;
+  string vector_id = 2;
+  VectorRef vector = 3;
+  Error error = 4;
+}
+
+message GetVectorRequest {
+  string vector_id = 1;
+  map<string, string> options = 2;
+}
+
+message GetVectorResponse {
+  bool success = 1;
+  VectorRef vector = 2;
+  Error error = 3;
+}
+
+message UpdateVectorRequest {
+  string vector_id = 1;
+  VectorRef vector = 2;
+  map<string, string> options = 3;
+}
+
+message UpdateVectorResponse {
+  bool success = 1;
+  VectorRef vector = 2;
+  Error error = 3;
+}
+
+message DeleteVectorRequest {
+  string vector_id = 1;
+  map<string, string> options = 2;
+}
+
+message DeleteVectorResponse {
+  bool success = 1;
+  Error error = 2;
+}
+
+message ListVectorsRequest {
+  string collection = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+  map<string, string> filters = 4;
+  map<string, string> options = 5;
+}
+
+message ListVectorsResponse {
+  bool success = 1;
+  repeated VectorRef vectors = 2;
+  int64 total_count = 3;
+  Error error = 4;
+}
+
+// Similarity operations
+message SimilaritySearchRequest {
+  string collection = 1;
+  VectorRef query_vector = 2;
+  VectorCondition similarity_condition = 3;
+  int32 limit = 4;
+  map<string, string> options = 5;
+}
+
+message SimilaritySearchResponse {
+  bool success = 1;
+  repeated SimilarityResult results = 2;
+  int32 total_found = 3;
+  Error error = 4;
+}
+
+message NearestNeighborsRequest {
+  string collection = 1;
+  VectorRef query_vector = 2;
+  int32 k = 3;
+  SimilarityMetric metric = 4;
+  map<string, string> options = 5;
+}
+
+message NearestNeighborsResponse {
+  bool success = 1;
+  repeated SimilarityResult neighbors = 2;
+  Error error = 3;
+}
+
+message VectorDistanceRequest {
+  VectorRef vector1 = 1;
+  VectorRef vector2 = 2;
+  SimilarityMetric metric = 3;
+  map<string, string> options = 4;
+}
+
+message VectorDistanceResponse {
+  bool success = 1;
+  double distance = 2;
+  double similarity = 3;
+  Error error = 4;
+}
+
+// Vector arithmetic operations
+message VectorAddRequest {
+  VectorRef vector1 = 1;
+  VectorRef vector2 = 2;
+  map<string, string> options = 3;
+}
+
+message VectorAddResponse {
+  bool success = 1;
+  VectorRef result = 2;
+  Error error = 3;
+}
+
+message VectorSubtractRequest {
+  VectorRef vector1 = 1;
+  VectorRef vector2 = 2;
+  map<string, string> options = 3;
+}
+
+message VectorSubtractResponse {
+  bool success = 1;
+  VectorRef result = 2;
+  Error error = 3;
+}
+
+message VectorMultiplyRequest {
+  VectorRef vector = 1;
+  double scalar = 2;
+  map<string, string> options = 3;
+}
+
+message VectorMultiplyResponse {
+  bool success = 1;
+  VectorRef result = 2;
+  Error error = 3;
+}
+
+message VectorNormalizeRequest {
+  VectorRef vector = 1;
+  NormType norm_type = 2;
+  map<string, string> options = 3;
+}
+
+enum NormType {
+  L1 = 0;
+  L2 = 1;
+  LINF = 2;
+}
+
+message VectorNormalizeResponse {
+  bool success = 1;
+  VectorRef normalized_vector = 2;
+  double magnitude = 3;
+  Error error = 4;
+}
+
+message DotProductRequest {
+  VectorRef vector1 = 1;
+  VectorRef vector2 = 2;
+  map<string, string> options = 3;
+}
+
+message DotProductResponse {
+  bool success = 1;
+  double product = 2;
+  Error error = 3;
+}
+
+// Embedding operations
+message GenerateEmbeddingRequest {
+  string text = 1;
+  EmbeddingModel model = 2;
+  map<string, string> options = 3;
+}
+
+message EmbeddingModel {
+  string name = 1;
+  string version = 2;
+  int32 dimensions = 3;
+  map<string, string> parameters = 4;
+}
+
+message GenerateEmbeddingResponse {
+  bool success = 1;
+  VectorRef embedding = 2;
+  EmbeddingModel model_used = 3;
+  Error error = 4;
+}
+
+message BatchEmbeddingRequest {
+  repeated string texts = 1;
+  EmbeddingModel model = 2;
+  map<string, string> options = 3;
+}
+
+message BatchEmbeddingResponse {
+  bool success = 1;
+  repeated EmbeddingResult embeddings = 2;
+  EmbeddingModel model_used = 3;
+  Error error = 4;
+}
+
+message EmbeddingResult {
+  string input_text = 1;
+  VectorRef embedding = 2;
+  map<string, string> metadata = 3;
+}
+
+message EmbeddingSimilarityRequest {
+  VectorRef embedding1 = 1;
+  VectorRef embedding2 = 2;
+  SimilarityMetric metric = 3;
+  map<string, string> options = 4;
+}
+
+message EmbeddingSimilarityResponse {
+  bool success = 1;
+  double similarity = 2;
+  double distance = 3;
+  Error error = 4;
+}
+
+// Clustering operations
+message VectorClusteringRequest {
+  repeated VectorRef vectors = 1;
+  ClusteringAlgorithm algorithm = 2;
+  int32 num_clusters = 3;
+  map<string, string> options = 4;
+}
+
+enum ClusteringAlgorithm {
+  KMEANS = 0;
+  DBSCAN = 1;
+  HIERARCHICAL = 2;
+  GAUSSIAN_MIXTURE = 3;
+  SPECTRAL = 4;
+}
+
+message VectorClusteringResponse {
+  bool success = 1;
+  repeated Cluster clusters = 2;
+  int32 num_clusters = 3;
+  repeated int32 cluster_assignments = 4;
+  Error error = 5;
+}
+
+message ClusterAnalysisRequest {
+  repeated Cluster clusters = 1;
+  ClusterAnalysisType analysis_type = 2;
+  map<string, string> options = 3;
+}
+
+enum ClusterAnalysisType {
+  SILHOUETTE = 0;
+  CALINSKI_HARABASZ = 1;
+  DAVIES_BOULDIN = 2;
+  ELBOW = 3;
+}
+
+message ClusterAnalysisResponse {
+  bool success = 1;
+  double score = 2;
+  map<string, double> metrics = 3;
+  Error error = 4;
+}
+
+// Index operations
+message CreateIndexRequest {
+  string collection = 1;
+  VectorIndexType index_type = 2;
+  int32 dimensions = 3;
+  SimilarityMetric metric = 4;
+  map<string, string> options = 5;
+}
+
+enum VectorIndexType {
+  VECTOR_INDEX_FLAT = 0;
+  VECTOR_INDEX_IVF = 1;
+  VECTOR_INDEX_HNSW = 2;
+  VECTOR_INDEX_LSH = 3;
+  VECTOR_INDEX_ANNOY = 4;
+}
+
+message CreateIndexResponse {
+  bool success = 1;
+  string index_id = 2;
+  Error error = 3;
+}
+
+message DeleteIndexRequest {
+  string index_id = 1;
+  map<string, string> options = 2;
+}
+
+message DeleteIndexResponse {
+  bool success = 1;
+  Error error = 2;
+}
+
+message ListIndexesRequest {
+  string collection = 1;
+  map<string, string> options = 2;
+}
+
+message ListIndexesResponse {
+  bool success = 1;
+  repeated VectorIndex indexes = 2;
+  Error error = 3;
+}
+
+// Data structures
+message SimilarityResult {
+  string vector_id = 1;
+  VectorRef vector = 2;
+  double similarity = 3;
+  double distance = 4;
+  map<string, string> metadata = 5;
+}
+
+message Cluster {
+  string cluster_id = 1;
+  VectorRef centroid = 2;
+  repeated string vector_ids = 3;
+  int32 size = 4;
+  double variance = 5;
+  map<string, string> metadata = 6;
+}
+
+message VectorIndex {
+  string index_id = 1;
+  string collection = 2;
+  VectorIndexType type = 3;
+  int32 dimensions = 4;
+  SimilarityMetric metric = 5;
+  int32 vector_count = 6;
+  map<string, string> options = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}

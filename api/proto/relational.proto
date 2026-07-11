@@ -1,0 +1,342 @@
+syntax = "proto3";
+
+package varyd.api.v1;
+
+import "types.proto";
+
+option go_package = "github.com/sqlrest/go-varyd/src/proto/relational";
+
+service RelationalService {
+  // Schema operations
+  rpc CreateTable(CreateTableRequest) returns (CreateTableResponse);
+  rpc DropTable(DropTableRequest) returns (DropTableResponse);
+  rpc AlterTable(AlterTableRequest) returns (AlterTableResponse);
+  rpc DescribeTable(DescribeTableRequest) returns (DescribeTableResponse);
+
+  // Data operations
+  rpc Insert(InsertRequest) returns (InsertResponse);
+  rpc Select(SelectRequest) returns (SelectResponse);
+  rpc Update(UpdateRequest) returns (UpdateResponse);
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
+
+  // Advanced operations
+  rpc Join(JoinRequest) returns (JoinResponse);
+  rpc Aggregate(AggregateRequest) returns (AggregateResponse);
+
+  // Transaction operations
+  rpc BeginTransaction(BeginTransactionRequest) returns (BeginTransactionResponse);
+  rpc CommitTransaction(CommitTransactionRequest) returns (CommitTransactionResponse);
+  rpc RollbackTransaction(RollbackTransactionRequest) returns (RollbackTransactionResponse);
+
+  // Batch operations
+  rpc BatchInsert(BatchInsertRequest) returns (BatchInsertResponse);
+  rpc BatchUpdate(BatchUpdateRequest) returns (BatchUpdateResponse);
+  rpc BatchDelete(BatchDeleteRequest) returns (BatchDeleteResponse);
+}
+
+// Schema operations
+message CreateTableRequest {
+  TableSchema schema = 1;
+  bool if_not_exists = 2;
+  map<string, string> options = 3;
+}
+
+message CreateTableResponse {
+  bool success = 1;
+  string message = 2;
+  TableRef table = 3;
+  Error error = 4;
+}
+
+message DropTableRequest {
+  TableRef table = 1;
+  bool if_exists = 2;
+  bool cascade = 3;
+  map<string, string> options = 4;
+}
+
+message DropTableResponse {
+  bool success = 1;
+  string message = 2;
+  Error error = 3;
+}
+
+message AlterTableRequest {
+  TableRef table = 1;
+  repeated AlterOperation operations = 2;
+  map<string, string> options = 3;
+}
+
+message AlterOperation {
+  enum Type {
+    ADD_COLUMN = 0;
+    DROP_COLUMN = 1;
+    MODIFY_COLUMN = 2;
+    RENAME_COLUMN = 3;
+    ADD_CONSTRAINT = 4;
+    DROP_CONSTRAINT = 5;
+    ADD_INDEX = 6;
+    DROP_INDEX = 7;
+  }
+
+  Type type = 1;
+  ColumnDefinition column = 2;
+  ConstraintDefinition constraint = 3;
+  IndexDefinition index = 4;
+  string old_name = 5;
+  string new_name = 6;
+}
+
+message AlterTableResponse {
+  bool success = 1;
+  string message = 2;
+  TableSchema updated_schema = 3;
+  Error error = 4;
+}
+
+message DescribeTableRequest {
+  TableRef table = 1;
+  bool include_indexes = 2;
+  bool include_constraints = 3;
+  map<string, string> options = 4;
+}
+
+message DescribeTableResponse {
+  bool success = 1;
+  TableSchema schema = 2;
+  Error error = 3;
+}
+
+// Data operations
+message SelectRequest {
+  repeated Expression select_expressions = 1;
+  TableRef from_table = 2;
+  repeated JoinClause joins = 3;
+  Condition where_condition = 4;
+  repeated Expression group_by_expressions = 5;
+  Condition having_condition = 6;
+  repeated OrderByClause order_by = 7;
+  int32 limit = 8;
+  int32 offset = 9;
+  map<string, string> options = 10;
+}
+
+message JoinClause {
+  TableRef table = 1;
+  JoinType join_type = 2;
+  Condition join_condition = 3;
+  repeated Expression using_columns = 4;
+}
+
+message SelectResponse {
+  bool success = 1;
+  repeated TypedRow rows = 2;
+  repeated ColumnRef column_metadata = 3;
+  int64 total_count = 4;
+  Error error = 5;
+}
+
+message InsertRequest {
+  TableRef table = 1;
+  repeated ColumnRef columns = 2;
+  repeated TypedRow rows = 3;
+  OnConflictAction on_conflict = 4;
+  map<string, string> options = 5;
+}
+
+enum OnConflictAction {
+  ABORT = 0;
+  IGNORE = 1;
+  REPLACE = 2;
+  UPDATE = 3;
+}
+
+message InsertResponse {
+  bool success = 1;
+  int64 rows_affected = 2;
+  repeated TypedValue generated_ids = 3;
+  Error error = 4;
+}
+
+message UpdateRequest {
+  TableRef table = 1;
+  repeated SetClause set_clauses = 2;
+  repeated JoinClause joins = 3;
+  Condition where_condition = 4;
+  repeated OrderByClause order_by = 5;
+  int32 limit = 6;
+  map<string, string> options = 7;
+}
+
+message UpdateResponse {
+  bool success = 1;
+  int64 rows_affected = 2;
+  Error error = 3;
+}
+
+message DeleteRequest {
+  TableRef table = 1;
+  repeated JoinClause joins = 2;
+  Condition where_condition = 3;
+  repeated OrderByClause order_by = 4;
+  int32 limit = 5;
+  map<string, string> options = 6;
+}
+
+message DeleteResponse {
+  bool success = 1;
+  int64 rows_affected = 2;
+  Error error = 3;
+}
+
+// Advanced operations
+message JoinRequest {
+  TableRef left_table = 1;
+  TableRef right_table = 2;
+  JoinType join_type = 3;
+  Condition join_condition = 4;
+  repeated Expression select_expressions = 5;
+  Condition where_condition = 6;
+  repeated OrderByClause order_by = 7;
+  int32 limit = 8;
+  int32 offset = 9;
+  map<string, string> options = 10;
+}
+
+message JoinResponse {
+  bool success = 1;
+  repeated TypedRow rows = 2;
+  repeated ColumnRef column_metadata = 3;
+  Error error = 4;
+}
+
+message AggregateRequest {
+  TableRef table = 1;
+  repeated JoinClause joins = 2;
+  Condition where_condition = 3;
+  repeated Expression group_by_expressions = 4;
+  repeated AggregateExpression aggregate_expressions = 5;
+  Condition having_condition = 6;
+  repeated OrderByClause order_by = 7;
+  int32 limit = 8;
+  int32 offset = 9;
+  map<string, string> options = 10;
+}
+
+message AggregateExpression {
+  AggregateFunction function = 1;
+  Expression expression = 2;
+  string alias = 3;
+  bool distinct = 4;
+}
+
+message AggregateResponse {
+  bool success = 1;
+  repeated TypedRow rows = 2;
+  repeated ColumnRef column_metadata = 3;
+  Error error = 4;
+}
+
+// Transaction operations
+message BeginTransactionRequest {
+  IsolationLevel isolation_level = 1;
+  AccessMode access_mode = 2;
+  map<string, string> options = 3;
+}
+
+enum IsolationLevel {
+  READ_UNCOMMITTED = 0;
+  READ_COMMITTED = 1;
+  REPEATABLE_READ = 2;
+  SERIALIZABLE = 3;
+}
+
+enum AccessMode {
+  READ_WRITE = 0;
+  READ_ONLY = 1;
+}
+
+message BeginTransactionResponse {
+  bool success = 1;
+  string transaction_id = 2;
+  Error error = 3;
+}
+
+message CommitTransactionRequest {
+  string transaction_id = 1;
+  map<string, string> options = 2;
+}
+
+message CommitTransactionResponse {
+  bool success = 1;
+  string message = 2;
+  Error error = 3;
+}
+
+message RollbackTransactionRequest {
+  string transaction_id = 1;
+  string savepoint = 2;
+  map<string, string> options = 3;
+}
+
+message RollbackTransactionResponse {
+  bool success = 1;
+  string message = 2;
+  Error error = 3;
+}
+
+// Batch operations
+message BatchInsertRequest {
+  TableRef table = 1;
+  repeated ColumnRef columns = 2;
+  repeated TypedRow rows = 3;
+  OnConflictAction on_conflict = 4;
+  int32 batch_size = 5;
+  map<string, string> options = 6;
+}
+
+message BatchInsertResponse {
+  bool success = 1;
+  int64 total_rows_affected = 2;
+  repeated BatchResult batch_results = 3;
+  Error error = 4;
+}
+
+message BatchUpdateRequest {
+  TableRef table = 1;
+  repeated UpdateStatement updates = 2;
+  int32 batch_size = 3;
+  map<string, string> options = 4;
+}
+
+message UpdateStatement {
+  repeated SetClause set_clauses = 1;
+  Condition where_condition = 2;
+}
+
+message BatchUpdateResponse {
+  bool success = 1;
+  int64 total_rows_affected = 2;
+  repeated BatchResult batch_results = 3;
+  Error error = 4;
+}
+
+message BatchDeleteRequest {
+  TableRef table = 1;
+  repeated Condition conditions = 2;
+  int32 batch_size = 3;
+  map<string, string> options = 4;
+}
+
+message BatchDeleteResponse {
+  bool success = 1;
+  int64 total_rows_affected = 2;
+  repeated BatchResult batch_results = 3;
+  Error error = 4;
+}
+
+message BatchResult {
+  bool success = 1;
+  int64 rows_affected = 2;
+  Error error = 3;
+}

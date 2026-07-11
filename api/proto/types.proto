@@ -1,0 +1,470 @@
+syntax = "proto3";
+
+package varyd.api.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/sqlrest/go-varyd/src/proto/types";
+
+// Core data type system
+enum DataType {
+  UNKNOWN_TYPE = 0;
+  INTEGER = 1;
+  BIGINT = 2;
+  FLOAT = 3;
+  DOUBLE = 4;
+  STRING = 5;
+  BOOLEAN = 6;
+  DATE = 7;
+  TIMESTAMP = 8;
+  BINARY = 9;
+  JSON = 10;
+  UUID = 11;
+  DECIMAL = 12;
+}
+
+// Strongly typed table reference
+message TableRef {
+  string database = 1;
+  string schema = 2;
+  string table = 3;
+  string alias = 4;
+}
+
+// Strongly typed column reference
+message ColumnRef {
+  TableRef table = 1;
+  string column = 2;
+  DataType type = 3;
+  string alias = 4;
+}
+
+// Strongly typed value
+message TypedValue {
+  DataType type = 1;
+  oneof value {
+    int64 int_val = 2;
+    double float_val = 3;
+    string string_val = 4;
+    bool bool_val = 5;
+    int64 timestamp_val = 6;
+    bytes binary_val = 7;
+    string json_val = 8;
+    string uuid_val = 9;
+    string decimal_val = 10;
+  }
+}
+
+// Strongly typed row data
+message TypedRow {
+  repeated TypedValue values = 1;
+  map<string, string> metadata = 2;
+}
+
+// Expression system
+message Expression {
+  oneof expression {
+    ColumnRef column = 1;
+    TypedValue literal = 2;
+    FunctionCall function = 3;
+    ArithmeticExpression arithmetic = 4;
+    CaseExpression case_expr = 5;
+  }
+}
+
+message FunctionCall {
+  string name = 1;
+  repeated Expression arguments = 2;
+  DataType return_type = 3;
+  bool is_aggregate = 4;
+}
+
+message ArithmeticExpression {
+  enum Operator {
+    ADD = 0;
+    SUBTRACT = 1;
+    MULTIPLY = 2;
+    DIVIDE = 3;
+    MODULO = 4;
+    POWER = 5;
+  }
+
+  Expression left = 1;
+  Operator operator = 2;
+  Expression right = 3;
+}
+
+message CaseExpression {
+  repeated WhenClause when_clauses = 1;
+  Expression else_expr = 2;
+}
+
+message WhenClause {
+  Condition condition = 1;
+  Expression result = 2;
+}
+
+// Condition system
+message Condition {
+  oneof condition {
+    ComparisonCondition comparison = 1;
+    LogicalCondition logical = 2;
+    InCondition in_condition = 3;
+    BetweenCondition between_condition = 4;
+    NullCondition null_condition = 5;
+    LikeCondition like_condition = 6;
+    ExistsCondition exists_condition = 7;
+    SpatialCondition spatial_condition = 8;
+    VectorCondition vector_condition = 9;
+  }
+}
+
+message ComparisonCondition {
+  enum Operator {
+    EQUALS = 0;
+    NOT_EQUALS = 1;
+    LESS_THAN = 2;
+    LESS_THAN_OR_EQUAL = 3;
+    GREATER_THAN = 4;
+    GREATER_THAN_OR_EQUAL = 5;
+  }
+
+  Expression left = 1;
+  Operator operator = 2;
+  Expression right = 3;
+}
+
+message LogicalCondition {
+  enum Operator {
+    AND = 0;
+    OR = 1;
+    NOT = 2;
+  }
+
+  Operator operator = 1;
+  repeated Condition conditions = 2;
+}
+
+message InCondition {
+  Expression expression = 1;
+  repeated Expression values = 2;
+  bool negated = 3;
+}
+
+message BetweenCondition {
+  Expression expression = 1;
+  Expression lower_bound = 2;
+  Expression upper_bound = 3;
+  bool negated = 4;
+}
+
+message NullCondition {
+  Expression expression = 1;
+  bool is_null = 2;
+}
+
+message LikeCondition {
+  Expression expression = 1;
+  Expression pattern = 2;
+  bool case_sensitive = 3;
+  bool negated = 4;
+}
+
+message ExistsCondition {
+  SubqueryExpression subquery = 1;
+  bool negated = 2;
+}
+
+message SubqueryExpression {
+  // This would contain a full query structure
+  // For now, keeping it simple
+  string query = 1;
+}
+
+// Schema definitions
+message TableSchema {
+  TableRef table = 1;
+  repeated ColumnDefinition columns = 2;
+  repeated IndexDefinition indexes = 3;
+  repeated ConstraintDefinition constraints = 4;
+  map<string, string> options = 5;
+}
+
+message ColumnDefinition {
+  string name = 1;
+  DataType type = 2;
+  bool nullable = 3;
+  TypedValue default_value = 4;
+  repeated ConstraintType constraints = 5;
+  string comment = 6;
+  int32 max_length = 7;
+  int32 precision = 8;
+  int32 scale = 9;
+}
+
+message IndexDefinition {
+  string name = 1;
+  IndexType type = 2;
+  repeated string columns = 3;
+  bool unique = 4;
+  map<string, string> options = 5;
+}
+
+message ConstraintDefinition {
+  string name = 1;
+  ConstraintType type = 2;
+  repeated string columns = 3;
+  TableRef reference_table = 4;
+  repeated string reference_columns = 5;
+  Expression check_expression = 6;
+  ForeignKeyAction on_delete = 7;
+  ForeignKeyAction on_update = 8;
+}
+
+enum ConstraintType {
+  UNKNOWN_CONSTRAINT = 0;
+  PRIMARY_KEY = 1;
+  UNIQUE = 2;
+  NOT_NULL = 3;
+  CHECK = 4;
+  FOREIGN_KEY = 5;
+}
+
+enum IndexType {
+  UNKNOWN_INDEX = 0;
+  BTREE = 1;
+  HASH = 2;
+  BITMAP = 3;
+  GIN = 4;
+  GIST = 5;
+}
+
+enum ForeignKeyAction {
+  NO_ACTION = 0;
+  RESTRICT = 1;
+  CASCADE = 2;
+  SET_NULL = 3;
+  SET_DEFAULT = 4;
+}
+
+// Join types
+enum JoinType {
+  INNER = 0;
+  LEFT = 1;
+  RIGHT = 2;
+  FULL = 3;
+  CROSS = 4;
+  NATURAL = 5;
+}
+
+// Order by direction
+enum OrderDirection {
+  ASC = 0;
+  DESC = 1;
+}
+
+message OrderByClause {
+  Expression expression = 1;
+  OrderDirection direction = 2;
+  NullsOrder nulls_order = 3;
+}
+
+enum NullsOrder {
+  NULLS_DEFAULT = 0;
+  NULLS_FIRST = 1;
+  NULLS_LAST = 2;
+}
+
+// Aggregate functions
+enum AggregateFunction {
+  COUNT = 0;
+  SUM = 1;
+  AVG = 2;
+  MIN = 3;
+  MAX = 4;
+  STDDEV = 5;
+  VARIANCE = 6;
+  MEDIAN = 7;
+  MODE = 8;
+  FIRST = 9;
+  LAST = 10;
+}
+
+// Set operations
+message SetClause {
+  ColumnRef column = 1;
+  Expression value = 2;
+}
+
+// Spatial-specific types
+message GeometryRef {
+  enum Type {
+    POINT = 0;
+    LINESTRING = 1;
+    POLYGON = 2;
+    MULTIPOINT = 3;
+    MULTILINESTRING = 4;
+    MULTIPOLYGON = 5;
+    GEOMETRYCOLLECTION = 6;
+  }
+
+  Type type = 1;
+  string srid = 2;
+  bytes wkb = 3;
+  repeated Coordinate coordinates = 4;
+  map<string, string> properties = 5;
+}
+
+message Coordinate {
+  double x = 1;
+  double y = 2;
+  double z = 3;
+  double m = 4; // measure
+}
+
+message SpatialCondition {
+  enum Operation {
+    WITHIN = 0;
+    CONTAINS = 1;
+    INTERSECTS = 2;
+    TOUCHES = 3;
+    CROSSES = 4;
+    OVERLAPS = 5;
+    EQUALS = 6;
+    DISJOINT = 7;
+    COVERS = 8;
+    COVERED_BY = 9;
+  }
+
+  GeometryRef geometry1 = 1;
+  Operation operation = 2;
+  GeometryRef geometry2 = 3;
+}
+
+message DistanceCondition {
+  enum Unit {
+    METERS = 0;
+    KILOMETERS = 1;
+    MILES = 2;
+    FEET = 3;
+    DEGREES = 4;
+  }
+
+  GeometryRef geometry1 = 1;
+  GeometryRef geometry2 = 2;
+  ComparisonCondition.Operator operator = 3;
+  double distance = 4;
+  Unit unit = 5;
+}
+
+// Vector-specific types
+message VectorRef {
+  string id = 1;
+  string collection = 2;
+  repeated float values = 3;
+  DataType element_type = 4;
+  int32 dimensions = 5;
+  map<string, string> metadata = 6;
+}
+
+message SimilarityMetric {
+  enum Type {
+    COSINE = 0;
+    EUCLIDEAN = 1;
+    DOT_PRODUCT = 2;
+    MANHATTAN = 3;
+    HAMMING = 4;
+    JACCARD = 5;
+    CHEBYSHEV = 6;
+  }
+  Type type = 1;
+  map<string, float> parameters = 2;
+}
+
+message VectorCondition {
+  VectorRef vector = 1;
+  SimilarityMetric metric = 2;
+  float threshold = 3;
+  ComparisonCondition.Operator operator = 4;
+}
+
+// Graph-specific types
+message NodeRef {
+  string id = 1;
+  string label = 2;
+  map<string, TypedValue> properties = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+message EdgeRef {
+  string id = 1;
+  string type = 2;
+  NodeRef source = 3;
+  NodeRef target = 4;
+  map<string, TypedValue> properties = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+message GraphPattern {
+  repeated NodePattern nodes = 1;
+  repeated EdgePattern edges = 2;
+}
+
+message NodePattern {
+  string variable = 1;
+  repeated string labels = 2;
+  map<string, PropertyCondition> properties = 3;
+}
+
+message EdgePattern {
+  string variable = 1;
+  repeated string types = 2;
+  string source_variable = 3;
+  string target_variable = 4;
+  map<string, PropertyCondition> properties = 5;
+  Direction direction = 6;
+}
+
+enum Direction {
+  UNDIRECTED = 0;
+  OUTGOING = 1;
+  INCOMING = 2;
+  BIDIRECTIONAL = 3;
+}
+
+message PropertyCondition {
+  string property = 1;
+  Condition condition = 2;
+}
+
+// Traversal algorithms
+enum TraversalAlgorithm {
+  BFS = 0;
+  DFS = 1;
+  DIJKSTRA = 2;
+  A_STAR = 3;
+}
+
+// Error handling
+message Error {
+  string code = 1;
+  string message = 2;
+  string details = 3;
+  map<string, string> metadata = 4;
+}
+
+enum ErrorCode {
+  UNKNOWN_ERROR = 0;
+  INVALID_REQUEST = 1;
+  NOT_FOUND = 2;
+  PERMISSION_DENIED = 3;
+  RESOURCE_EXHAUSTED = 4;
+  UNAVAILABLE = 5;
+  INTERNAL = 6;
+  DATA_LOSS = 7;
+  CONSTRAINT_VIOLATION = 8;
+  TYPE_MISMATCH = 9;
+  SYNTAX_ERROR = 10;
+}

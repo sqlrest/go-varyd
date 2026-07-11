@@ -1,0 +1,422 @@
+syntax = "proto3";
+
+package varyd.api.v1;
+
+import "types.proto";
+
+option go_package = "github.com/sqlrest/go-varyd/src/proto/graph";
+
+service GraphService {
+  // Graph management
+  rpc CreateGraph(CreateGraphRequest) returns (CreateGraphResponse);
+  rpc DropGraph(DropGraphRequest) returns (DropGraphResponse);
+  rpc DescribeGraph(DescribeGraphRequest) returns (DescribeGraphResponse);
+
+  // Node operations
+  rpc CreateNode(CreateNodeRequest) returns (CreateNodeResponse);
+  rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
+  rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
+  rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);
+  rpc ListNodes(ListNodesRequest) returns (ListNodesResponse);
+
+  // Edge operations
+  rpc CreateEdge(CreateEdgeRequest) returns (CreateEdgeResponse);
+  rpc GetEdge(GetEdgeRequest) returns (GetEdgeResponse);
+  rpc UpdateEdge(UpdateEdgeRequest) returns (UpdateEdgeResponse);
+  rpc DeleteEdge(DeleteEdgeRequest) returns (DeleteEdgeResponse);
+  rpc ListEdges(ListEdgesRequest) returns (ListEdgesResponse);
+
+  // Traversal operations
+  rpc Traverse(TraverseRequest) returns (TraverseResponse);
+  rpc ShortestPath(ShortestPathRequest) returns (ShortestPathResponse);
+  rpc AllPaths(AllPathsRequest) returns (AllPathsResponse);
+
+  // Graph algorithms
+  rpc Centrality(CentralityRequest) returns (CentralityResponse);
+  rpc CommunityDetection(CommunityDetectionRequest) returns (CommunityDetectionResponse);
+  rpc PageRank(PageRankRequest) returns (PageRankResponse);
+  rpc ConnectedComponents(ConnectedComponentsRequest) returns (ConnectedComponentsResponse);
+  rpc CycleDetection(CycleDetectionRequest) returns (CycleDetectionResponse);
+
+  // Pattern matching
+  rpc MatchPattern(MatchPatternRequest) returns (MatchPatternResponse);
+  rpc Subgraph(SubgraphRequest) returns (SubgraphResponse);
+}
+
+// Graph management
+message CreateGraphRequest {
+  string name = 1;
+  map<string, string> options = 2;
+}
+
+message CreateGraphResponse {
+  bool success = 1;
+  string message = 2;
+  Error error = 3;
+}
+
+message DropGraphRequest {
+  string name = 1;
+  bool if_exists = 2;
+  map<string, string> options = 3;
+}
+
+message DropGraphResponse {
+  bool success = 1;
+  string message = 2;
+  Error error = 3;
+}
+
+message DescribeGraphRequest {
+  string name = 1;
+  map<string, string> options = 2;
+}
+
+message DescribeGraphResponse {
+  bool success = 1;
+  int64 node_count = 2;
+  int64 edge_count = 3;
+  repeated string node_labels = 4;
+  repeated string edge_types = 5;
+  Error error = 6;
+}
+
+// Node operations
+message CreateNodeRequest {
+  string graph = 1;
+  string node_id = 2;
+  string label = 3;
+  map<string, TypedValue> properties = 4;
+  map<string, string> options = 5;
+}
+
+message CreateNodeResponse {
+  bool success = 1;
+  string node_id = 2;
+  NodeRef node = 3;
+  Error error = 4;
+}
+
+message GetNodeRequest {
+  string node_id = 1;
+  map<string, string> options = 2;
+}
+
+message GetNodeResponse {
+  bool success = 1;
+  NodeRef node = 2;
+  Error error = 3;
+}
+
+message UpdateNodeRequest {
+  string node_id = 1;
+  map<string, TypedValue> properties = 2;
+  map<string, string> options = 3;
+}
+
+message UpdateNodeResponse {
+  bool success = 1;
+  NodeRef node = 2;
+  Error error = 3;
+}
+
+message DeleteNodeRequest {
+  string node_id = 1;
+  bool cascade = 2;
+  map<string, string> options = 3;
+}
+
+message DeleteNodeResponse {
+  bool success = 1;
+  int64 edges_deleted = 2;
+  Error error = 3;
+}
+
+message ListNodesRequest {
+  repeated string labels = 1;
+  map<string, PropertyCondition> property_filters = 2;
+  int32 limit = 3;
+  int32 offset = 4;
+  map<string, string> options = 5;
+}
+
+message ListNodesResponse {
+  bool success = 1;
+  repeated NodeRef nodes = 2;
+  int64 total_count = 3;
+  Error error = 4;
+}
+
+// Edge operations
+message CreateEdgeRequest {
+  string graph = 1;
+  string edge_id = 2;
+  string source_id = 3;
+  string target_id = 4;
+  string type = 5;
+  map<string, TypedValue> properties = 6;
+  map<string, string> options = 7;
+}
+
+message CreateEdgeResponse {
+  bool success = 1;
+  string edge_id = 2;
+  EdgeRef edge = 3;
+  Error error = 4;
+}
+
+message GetEdgeRequest {
+  string edge_id = 1;
+  map<string, string> options = 2;
+}
+
+message GetEdgeResponse {
+  bool success = 1;
+  EdgeRef edge = 2;
+  Error error = 3;
+}
+
+message UpdateEdgeRequest {
+  string edge_id = 1;
+  map<string, TypedValue> properties = 2;
+  map<string, string> options = 3;
+}
+
+message UpdateEdgeResponse {
+  bool success = 1;
+  EdgeRef edge = 2;
+  Error error = 3;
+}
+
+message DeleteEdgeRequest {
+  string edge_id = 1;
+  map<string, string> options = 2;
+}
+
+message DeleteEdgeResponse {
+  bool success = 1;
+  Error error = 2;
+}
+
+message ListEdgesRequest {
+  repeated string types = 1;
+  string source_id = 2;
+  string target_id = 3;
+  map<string, PropertyCondition> property_filters = 4;
+  int32 limit = 5;
+  int32 offset = 6;
+  map<string, string> options = 7;
+}
+
+message ListEdgesResponse {
+  bool success = 1;
+  repeated EdgeRef edges = 2;
+  int64 total_count = 3;
+  Error error = 4;
+}
+
+// Traversal operations
+message TraverseRequest {
+  string graph = 1;
+  string start_node_id = 2;
+  int32 max_depth = 3;
+  TraversalAlgorithm algorithm = 4;
+  repeated string edge_types = 5;
+  Direction direction = 6;
+  map<string, string> options = 7;
+}
+
+message TraverseResponse {
+  bool success = 1;
+  repeated PathResult paths = 2;
+  repeated NodeRef nodes = 3;
+  repeated EdgeRef edges = 4;
+  Error error = 5;
+}
+
+message ShortestPathRequest {
+  string source_id = 1;
+  string target_id = 2;
+  string weight_property = 3;
+  PathAlgorithm algorithm = 4;
+  map<string, string> options = 5;
+}
+
+enum PathAlgorithm {
+  PATH_DIJKSTRA = 0;
+  PATH_BELLMAN_FORD = 1;
+  PATH_A_STAR = 2;
+  PATH_FLOYD_WARSHALL = 3;
+}
+
+message ShortestPathResponse {
+  bool success = 1;
+  PathResult path = 2;
+  double total_weight = 3;
+  Error error = 4;
+}
+
+message AllPathsRequest {
+  string source_id = 1;
+  string target_id = 2;
+  int32 max_paths = 3;
+  int32 max_depth = 4;
+  map<string, string> options = 5;
+}
+
+message AllPathsResponse {
+  bool success = 1;
+  repeated PathResult paths = 2;
+  Error error = 3;
+}
+
+// Graph algorithms
+message CentralityRequest {
+  repeated string node_ids = 1;
+  CentralityType type = 2;
+  map<string, string> options = 3;
+}
+
+enum CentralityType {
+  DEGREE = 0;
+  BETWEENNESS = 1;
+  CLOSENESS = 2;
+  EIGENVECTOR = 3;
+  PAGERANK = 4;
+  KATZ = 5;
+}
+
+message CentralityResponse {
+  bool success = 1;
+  map<string, double> centrality_scores = 2;
+  Error error = 3;
+}
+
+message CommunityDetectionRequest {
+  CommunityAlgorithm algorithm = 1;
+  map<string, string> parameters = 2;
+  map<string, string> options = 3;
+}
+
+enum CommunityAlgorithm {
+  LOUVAIN = 0;
+  LABEL_PROPAGATION = 1;
+  GIRVAN_NEWMAN = 2;
+  LEIDEN = 3;
+  MODULARITY = 4;
+}
+
+message CommunityDetectionResponse {
+  bool success = 1;
+  map<string, int32> communities = 2;
+  int32 num_communities = 3;
+  double modularity = 4;
+  Error error = 5;
+}
+
+message PageRankRequest {
+  double damping_factor = 1;
+  int32 max_iterations = 2;
+  double tolerance = 3;
+  map<string, string> options = 4;
+}
+
+message PageRankResponse {
+  bool success = 1;
+  map<string, double> page_rank_scores = 2;
+  Error error = 3;
+}
+
+message ConnectedComponentsRequest {
+  ComponentAlgorithm algorithm = 1;
+  map<string, string> options = 2;
+}
+
+enum ComponentAlgorithm {
+  COMPONENT_UNION_FIND = 0;
+  COMPONENT_DFS = 1;
+  COMPONENT_BFS = 2;
+}
+
+message ConnectedComponentsResponse {
+  bool success = 1;
+  repeated Component components = 2;
+  int32 num_components = 3;
+  Error error = 4;
+}
+
+message CycleDetectionRequest {
+  CycleAlgorithm algorithm = 1;
+  map<string, string> options = 2;
+}
+
+enum CycleAlgorithm {
+  CYCLE_DFS = 0;
+  CYCLE_TARJAN = 1;
+  CYCLE_JOHNSON = 2;
+}
+
+message CycleDetectionResponse {
+  bool success = 1;
+  repeated Cycle cycles = 2;
+  bool has_cycles = 3;
+  Error error = 4;
+}
+
+// Pattern matching
+message MatchPatternRequest {
+  GraphPattern pattern = 1;
+  map<string, string> options = 2;
+}
+
+message MatchPatternResponse {
+  bool success = 1;
+  repeated PatternMatch matches = 2;
+  Error error = 3;
+}
+
+message SubgraphRequest {
+  repeated string node_ids = 1;
+  repeated string edge_ids = 2;
+  int32 depth = 3;
+  map<string, string> options = 4;
+}
+
+message SubgraphResponse {
+  bool success = 1;
+  repeated NodeRef nodes = 2;
+  repeated EdgeRef edges = 3;
+  Error error = 4;
+}
+
+// Data structures
+message PathResult {
+  string path_id = 1;
+  repeated NodeRef nodes = 2;
+  repeated EdgeRef edges = 3;
+  double total_weight = 4;
+  int32 length = 5;
+  map<string, string> metadata = 6;
+}
+
+message Component {
+  string component_id = 1;
+  repeated string node_ids = 2;
+  int32 size = 3;
+  map<string, string> metadata = 4;
+}
+
+message Cycle {
+  string cycle_id = 1;
+  repeated string node_ids = 2;
+  repeated string edge_ids = 3;
+  int32 length = 4;
+  map<string, string> metadata = 5;
+}
+
+message PatternMatch {
+  string match_id = 1;
+  map<string, NodeRef> node_bindings = 2;
+  map<string, EdgeRef> edge_bindings = 3;
+  map<string, string> metadata = 4;
+}
