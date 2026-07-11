@@ -4,6 +4,6 @@
 # CVE graph to go.sum. Requires buf, protoc-gen-go, and protoc-gen-go-grpc on
 # PATH (or in GOBIN, which is appended below).
 set -o errexit -o nounset -o pipefail
-CDPATH= cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null
+CDPATH='' cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null
 
 PATH="${PATH}:$(go env GOBIN):$(go env GOPATH)/bin" buf generate
