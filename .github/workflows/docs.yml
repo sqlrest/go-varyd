@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    - cron: "10 6 * * 4"
+    - cron: "5 14 * * 4"
   workflow_dispatch:
 concurrency:
   group: docs-${{ github.ref }}
