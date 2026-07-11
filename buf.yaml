@@ -11,8 +11,8 @@ lint:
     # src/proto/<name>), and the flat single proto package `varyd.api.v1`
     # predates buf's directory/package conventions. Restructuring into
     # per-domain packages (varyd.api.document.v1, ...) and prefixed enum
-    # values is a breaking contract redesign, deferred to a v2 proto package —
-    # tracked in the agent task queue. Changes within v1 stay additive-only.
+    # values is a breaking contract redesign, deferred to a future v2 proto
+    # package. Changes within v1 stay additive-only.
     - PACKAGE_VERSION_SUFFIX
     - FIELD_NOT_REQUIRED
     - PACKAGE_DIRECTORY_MATCH
